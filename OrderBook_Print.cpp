@@ -50,7 +50,7 @@ void OrderBook::Print() {
 
     stringstream ss;
     ss.imbue(comma_locale);
-    for(int i=0; i<max(sorted_buy_orders.size(),sorted_sell_orders.size()); i++) {
+    for(size_t i=0; i<max(sorted_buy_orders.size(),sorted_sell_orders.size()); i++) {
         cout << "|";
         if(i < sorted_buy_orders.size()) {
             auto& [id, volume, price] = sorted_buy_orders[i];
@@ -62,7 +62,7 @@ void OrderBook::Print() {
         } else {
             cout << string(10, ' ') << "|" << string(13, ' ') << "|" << string(7, ' ');
         }
-        cout  << "|";
+        cout << "|";
         if(i < sorted_sell_orders.size()) {
             auto& [id, volume, price] = sorted_sell_orders[i];
             ss.str("");
@@ -71,7 +71,7 @@ void OrderBook::Print() {
             cout << ss.str();
             cout << right << setw(10) << id;
         } else {
-            cout << string(10, ' ') << "|" << string(13, ' ') << "|" << string(7, ' ');
+            cout << string(7, ' ') << "|" << string(13, ' ') << "|" << string(10, ' ');
         }
         cout << "|";
         cout << endl;
@@ -92,8 +92,4 @@ void OrderBook::Print() {
     // }
     
     // vector<tuple<int, int, int>> sell_orders;
-}
-
-void Order::Print() {
-    cout << type << "\t" << price << "\t" << quantity << "\t" << id << endl;//"\t" << time << "\t" << peak_id << endl;
 }
