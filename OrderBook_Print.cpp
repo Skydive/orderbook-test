@@ -7,6 +7,7 @@
 #include <vector>
 
 // Printing with commas in C++
+// https://stackoverflow.com/questions/7276826/format-number-with-commas-in-c
 class comma_numpunct : public std::numpunct<char> {
 protected:
     virtual char do_thousands_sep() const {
@@ -18,7 +19,7 @@ protected:
 };
 
 /*
-    We seek to pretty print in the form below as follows!
+    We seek to pretty print in the form below as follows:
 +-----------------------------------------------------------------+
 | BUY                            | SELL                           |
 | Id       | Volume      | Price | Price | Volume      | Id       |
@@ -90,6 +91,4 @@ void OrderBook::Print() {
     //     auto [k, order] = *it;
     //     order.Print();
     // }
-    
-    // vector<tuple<int, int, int>> sell_orders;
 }
