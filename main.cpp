@@ -16,9 +16,9 @@ int main(int argc, char **argv) {
 
     PrintIntro();
 
-    book.InsertLimitSellOrder(0, 11, 100, 0);
-    book.InsertLimitSellOrder(1, 12,  50, 0);
-    book.InsertLimitSellOrder(2,  9,  25, 0);
+    book.InsertLimitSellOrder(0, 11, 100'000, 0);
+    book.InsertLimitSellOrder(1, 12,  50'000, 0);
+    book.InsertLimitSellOrder(2,  9,  25'000, 0);
     book.Print();
     book.InsertLimitBuyOrder(0, 11, 100);
     book.Print();

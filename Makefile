@@ -8,7 +8,7 @@ SRC_DIR = src
 OBJ_DIR = obj
 OUT_DIR = bin
 
-FILES_CPP = main.cpp OrderBook.cpp
+FILES_CPP = main.cpp OrderBook.cpp OrderBook_Print.cpp
 FILES_OBJ = $(addprefix $(OBJ_DIR)/,$(notdir $(FILES_CPP:.cpp=.o)))
 FILE_OUT = $(OUT_DIR)/IcebergExecutable
 
