@@ -29,7 +29,7 @@ protected:
 |          |             |       | 32,507|        3,000|     42100|
 +-----------------------------------------------------------------+
 */
-void OrderBook::Print() {
+void OrderBook::Print() const {
     // Global Variable for comma locale
     static locale comma_locale(locale(), new comma_numpunct());
 
@@ -44,10 +44,10 @@ void OrderBook::Print() {
 
     vector<tuple<int, int, int>> sorted_buy_orders;
     for(auto& [k, order] : buy_orders)
-        sorted_buy_orders.push_back({order.id, order.quantity, order.price});
+        sorted_buy_orders.push_back({order->id, order->quantity, order->price});
     vector<tuple<int, int, int>> sorted_sell_orders;
     for(auto& [k, order] : sell_orders)
-        sorted_sell_orders.push_back({order.id, order.quantity, order.price});
+        sorted_sell_orders.push_back({order->id, order->quantity, order->price});
 
     stringstream ss;
     ss.imbue(comma_locale);
@@ -79,16 +79,20 @@ void OrderBook::Print() {
     }
     // Bottom Border
     cout << "+" << string(65, '-') << "+" << endl; 
-    
-    // cout << "Time: " << time << endl;
-    // cout << "Type\tPrice\tQty\tID" << endl;
-    // for(auto it = sell_orders.rbegin(); it != sell_orders.rend(); it++) {
-    //     auto [k, order] = *it;
-    //     order.Print();
-    // }
+}
 
-    // for(auto it = buy_orders.begin(); it != buy_orders.end(); it++) {
-    //     auto [k, order] = *it;
-    //     order.Print();
-    // }
+ostream& operator<<(ostream& os, OrderBook& book) {
+    cout << "Time: " << book.getCurrentTime() << endl;
+    cout << "Type\tPrice\tQty\tID" << endl;
+    auto sell_orders = book.getSellOrders();
+    for(auto it = sell_orders.rbegin(); it != sell_orders.rend(); it++) {
+        auto& [k, order] = *it;
+        cout << *order;
+    }
+    auto& buy_orders = book.getBuyOrders();
+    for(auto it = buy_orders.begin(); it != buy_orders.end(); it++) {
+        auto& [k, order] = *it;
+        cout << *order;
+    }
+    return os;
 }

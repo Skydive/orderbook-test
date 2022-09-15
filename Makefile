@@ -28,7 +28,6 @@ $(FILE_OUT): $(FILES_OBJ)
 debug: CCFLAGS += -DDEBUG -g
 
 all: $(FILE_OUT)
-	echo $(FILES_OBJ)
 
 clean:
 	rm -R $(OBJ_DIR)

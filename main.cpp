@@ -33,6 +33,12 @@ int main() {
     book.InsertLimitSellOrder(5, 10, 50'000);
     book.Print();
 
+    book.InsertIcebergBuyOrder(1337, 12, 50'000, 20'000);
+    book.Print();
+
+    book.InsertLimitSellOrder(5, 10, 30'000);
+    book.Print();
+
 
     return 0;
 }

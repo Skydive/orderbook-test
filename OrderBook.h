@@ -1,25 +1,34 @@
+#pragma once
 #include <map>
+#include <memory>
 // #include <tuple>
 
 #include "Order.h"
 
 using namespace std;
-// (from, to, price, quantity)
+
+typedef multimap<pair<short, int>, Order*> OrderGroup;
 
 class OrderBook {
 private:
-    // (Sort by (price - short, time - int) 
-    // 
     int time;
-    multimap<pair<short, int>, Order> buy_orders;
-    multimap<pair<short, int>, Order> sell_orders;
+    // (Sort by (price - short, time - int) 
+    OrderGroup buy_orders;
+    OrderGroup sell_orders;
     
     // vector<TradeExecuted> transactions;
 public:
     OrderBook() : time(0) {};
     void InsertLimitBuyOrder(int id, short price, int quantity);
     void InsertLimitSellOrder(int id, short price, int quantity);
-    void InsertIceBergBuyOrder(int id, short price, int quantity, int peak_size);
+    void InsertIcebergBuyOrder(int id, short price, int quantity, int peak_size);
+    void InsertIcebergSellOrder(int id, short price, int quantity, int peak_size);
     void RegisterTransaction(int buy_id, int sell_id, short price, int quantity);
-    void Print();
+    void AddBuyOrder(Order* order);
+    void AddSellOrder(Order* order);
+    OrderGroup& getBuyOrders();
+    OrderGroup& getSellOrders();
+    int getCurrentTime() const;
+    void Print() const;
+    friend ostream& operator<<(ostream& os, const Order& order);
 };
