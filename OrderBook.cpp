@@ -9,6 +9,11 @@ void OrderBook::InsertLimitBuyOrder(int id, short price, int quantity) {
     cout << "COMMAND: BuyLimitOrder (" << id << ", " << price << ", " << quantity << ") " << endl;
     auto it = sell_orders.begin();
     // Print();
+
+    // TODO: Split matching parts into seperate functions
+    // Register a special transaction when we match against an iceberg
+    // Think about how to move away from the 'OnOrderResolved' methodology.
+    // Look at PDF for how matching is done specifically
     while(it != sell_orders.end() && (*it).second->price <= price && quantity > 0) {
         // cout << "Current Iterator: " << endl;
         // cout << (*it).second << endl;
@@ -126,8 +131,46 @@ void OrderBook::InsertIcebergBuyOrder(int id, short price, int quantity, int pea
 
     if(quantity > 0) { 
         auto* berg = new IcebergOrder('B', time, id, price, quantity, peak_size);
-        cout << "Inserting Iceberg: " << endl << *berg << endl;
+        cout << "Inserting Iceberg: " << *berg << endl;
         AddBuyOrder(berg);
+    }
+    time++;
+}
+
+void OrderBook::InsertIcebergSellOrder(int id, short price, int quantity, int peak_size) {
+    cout << "COMMAND: SellIcebergOrder (" << id << ", " << price << ", " << quantity << ", " << peak_size << ") " << endl;
+    auto it = buy_orders.begin();
+    while(it != buy_orders.end() && (*it).second->price <= price && quantity > 0) {
+        auto& [k, order] = *it;
+        if(order->quantity > quantity) {
+            // Iceberg order consumed entirely
+            RegisterTransaction(order->id, id, order->price, quantity);
+
+            Order* new_order = order->Clone(); // Copy Iceberg if it's an Iceberg
+            new_order->time = time; // Alter priority
+            new_order->quantity -= quantity;
+            AddBuyOrder(new_order);
+            quantity = 0;
+            delete order;
+            buy_orders.erase(it);
+            break;
+            
+        } else { // order.quantity <= quantity
+            // TODO: Is this valid - how do we record an Iceberg...
+            RegisterTransaction(order->id, id, order->price, order->quantity);
+
+            quantity -= order->quantity;
+            order->OnOrderResolved(*this);
+            delete order;
+            buy_orders.erase(it);
+        }
+        it = buy_orders.begin();
+    }
+
+    if(quantity > 0) { 
+        auto* berg = new IcebergOrder('S', time, id, price, quantity, peak_size);
+        cout << "Inserting Iceberg: " << *berg << endl;
+        AddSellOrder(berg);
     }
     time++;
 }

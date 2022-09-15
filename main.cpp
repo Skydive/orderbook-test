@@ -16,6 +16,11 @@ int main() {
 
     PrintIntro();
 
+    // TODO: Convert into unit tests
+        // Test buy/sell limit order matching, prices and priorities
+        // Test matching of iceberg orders and on resolved
+    // TODO: Code cin order processing
+    // TODO: Figure out how to print iceberg orders
     book.InsertLimitSellOrder(0, 11, 100'000);
     book.InsertLimitSellOrder(1, 12,  50'000);
     book.InsertLimitSellOrder(2,  9,  25'000);
@@ -39,6 +44,15 @@ int main() {
     book.InsertLimitSellOrder(5, 10, 30'000);
     book.Print();
 
+    book.InsertLimitBuyOrder(5, 10, 10'000);
+    book.Print();
+
+    book.InsertIcebergSellOrder(1338, 11, 60'000, 10'000);
+    book.InsertIcebergSellOrder(1337,  9,  5'001,    500);
+    book.Print();
+
+    book.InsertLimitBuyOrder(0, 10,  5'500);
+    book.Print();
 
     return 0;
 }
