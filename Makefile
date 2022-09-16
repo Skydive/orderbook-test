@@ -15,19 +15,26 @@ FILE_OUT = $(OUT_DIR)/IcebergExecutable
 TARGETS = $(FILES:%.cpp:%.o)
 
 $(OBJ_DIR)/%.o: %.cpp
-	echo " CC $<"
+	$(Q)echo " CC $<"
 	$(Q)mkdir -p $(OBJ_DIR)
 	$(Q)$(CC) -c $< -o $@ $(CFLAGS)
 
 $(FILE_OUT): $(FILES_OBJ)
-	echo "	LD $<"
+	$(Q)echo "	LD $<"
 	$(Q)mkdir -p $(OUT_DIR)
 	$(Q)$(CC) $^ -o $@ $(LFLAGS)
 
 
-debug: CCFLAGS += -DDEBUG -g
+build: $(FILE_OUT)
 
-all: $(FILE_OUT)
+debug: CFLAGS += -DDEBUG -g -Og
+debug: build
+
+release: CFLAGS += -DNODEBUG -DRELEASE -O3
+release: build
+
+all: release
 
 clean:
-	rm -R $(OBJ_DIR)
+	$(Q)echo " RM -Rf $(OBJ_DIR)"
+	$(Q)rm -Rf $(OBJ_DIR)

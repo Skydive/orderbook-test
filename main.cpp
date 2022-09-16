@@ -1,6 +1,9 @@
 #include <iostream>
+#include <sstream>
+#include <array>
 
 #include "OrderBook.h"
+#include "util.h"
 
 using namespace std;
 
@@ -14,45 +17,66 @@ inline void PrintIntro() {
 int main() {
     OrderBook book;
 
-    PrintIntro();
+    // PrintIntro();
 
-    // TODO: Convert into unit tests
-        // Test buy/sell limit order matching, prices and priorities
-        // Test matching of iceberg orders and on resolved
-    // TODO: Code cin order processing
-    // TODO: Figure out how to print iceberg orders
-    book.InsertLimitSellOrder(0, 11, 100'000);
-    book.InsertLimitSellOrder(1, 12,  50'000);
-    book.InsertLimitSellOrder(2,  9,  25'000);
-    book.Print();
-    book.InsertLimitBuyOrder(0, 11, 50'000);
-    book.Print();
-    book.InsertLimitBuyOrder(0, 12, 100'000);
-    book.Print();
-    book.InsertLimitBuyOrder(0, 12, 50'000);
-    book.InsertLimitBuyOrder(3, 12, 50'000);
-    book.Print();
+    // TODO: Unit tests for priorities
+    // TUDI: Unit test for limit order in between iceberg during matching 
+    // TODO: Figure out how to print iceberg orders properly
+    /*
+A trade message should be sent to stdout for each matched trade. Note that in the 
+technical specification it states that only a single trade message will be sent for each
+iceberg order, even if the match occurs on more than one peak (e.g. a match size of
+16,000 on an iceberg order with a peak size of 10,000 should trade once for a quantity
+of 16,000, not one for 10,000 and another for 6,000).
+    */
 
-    book.InsertLimitSellOrder(4, 10, 50'000);
-    book.Print();
-    book.InsertLimitSellOrder(5, 10, 50'000);
-    book.Print();
+    // Process cin!
+    string s;
+    int line = 0;
+    while(getline(cin, s)) {
+        line++;
+        // Remove whitespace
+        util::trim(s);
+        if(s.size() == 0)continue; // Whitespace line
+        if(s[0] == '#') continue; // Comment line
+        // ASCII Line: Split by commas
+        vector<string> command;
 
-    book.InsertIcebergBuyOrder(1337, 12, 50'000, 20'000);
-    book.Print();
-
-    book.InsertLimitSellOrder(5, 10, 30'000);
-    book.Print();
-
-    book.InsertLimitBuyOrder(5, 10, 10'000);
-    book.Print();
-
-    book.InsertIcebergSellOrder(1338, 11, 60'000, 10'000);
-    book.InsertIcebergSellOrder(1337,  9,  5'001,    500);
-    book.Print();
-
-    book.InsertLimitBuyOrder(0, 10,  5'500);
-    book.Print();
+        istringstream ss(s);
+        string token;
+        while(getline(ss, token, ',')) {
+            command.push_back(token);
+        }
+    
+        if(command.size() >= 4) {
+            char type = (char)command[0][0];
+            int id = stoi(command[1]);
+            short price = (short)stoi(command[2]);
+            int quantity = stoi(command[3]);
+            if(command.size() == 4) { // Limit Order
+                (type == 'B')
+                  ? book.InsertLimitBuyOrder(id, price, quantity)
+                  : book.InsertLimitSellOrder(id, price, quantity);
+            } else if(command.size() == 5) { // Iceberg Order
+                int peak_size = stoi(command[4]);
+                (type == 'B')
+                  ? book.InsertIcebergBuyOrder(id, price, quantity, peak_size)
+                  : book.InsertIcebergSellOrder(id, price, quantity, peak_size);
+            } else {
+                cerr << "ERROR: Malformed command! Line: " << line << endl;
+                cerr << "Problem: Too many arguments: " << command.size() << endl;
+                cerr << "Data: " << s << endl;
+                return 1;
+            }
+        } else {
+            cerr << "ERROR: Malformed command! Line: " << line << endl;
+            cerr << "Problem: Too few arguments: " << command.size() << endl;
+            cerr << "Data: " << s << endl;
+            return 1;
+        }
+        book.Print();
+    }
+    
 
     return 0;
 }

@@ -6,13 +6,15 @@
 void OrderBook::InsertLimitBuyOrder(int id, short price, int quantity) {
     // Check if a transaction can occur!
     // Find lowest someone is willing to sell below my bid price
-    cout << "COMMAND: BuyLimitOrder (" << id << ", " << price << ", " << quantity << ") " << endl;
+    #ifdef DEBUG
+        cerr << "COMMAND: BuyLimitOrder (" << id << ", " << price << ", " << quantity << ") " << endl;
+    #endif
     auto it = sell_orders.begin();
     // Print();
 
     // TODO: Split matching parts into seperate functions
     // Register a special transaction when we match against an iceberg
-    // Think about how to move away from the 'OnOrderResolved' methodology.
+    // Maybe think about how to move away from the 'OnOrderResolved' methodology.
     // Look at PDF for how matching is done specifically
     while(it != sell_orders.end() && (*it).second->price <= price && quantity > 0) {
         // cout << "Current Iterator: " << endl;
@@ -25,9 +27,10 @@ void OrderBook::InsertLimitBuyOrder(int id, short price, int quantity) {
             // Buy order consumed entirely
             RegisterTransaction(id, order->id, order->price, quantity);
 
-            // TODO: order.time or time(??)
             Order* new_order = order->Clone(); // Copy Iceberg if it's an Iceberg
-            new_order->time = time; // Alter priority
+            // TODO: order.time or time(??)
+            // TODO: Do we alter the priority or not? (ASK!?)
+            new_order->time = order->time; 
             new_order->quantity -= quantity;
             AddSellOrder(new_order);
             quantity = 0;
@@ -56,7 +59,9 @@ void OrderBook::InsertLimitBuyOrder(int id, short price, int quantity) {
 
 void OrderBook::InsertLimitSellOrder(int id, short price, int quantity) {
     // Find highest someone is willing to buy at above my ask price
-    cout << "COMMAND: SellLimitOrder (" << id << ", " << price << ", " << quantity << ") " << endl;;
+    #ifdef DEBUG
+        cerr << "COMMAND: SellLimitOrder (" << id << ", " << price << ", " << quantity << ") " << endl;;
+    #endif
     auto it = buy_orders.begin();
     // Print();
     while(it != buy_orders.end() && (*it).second->price >= price && quantity > 0) {
@@ -100,7 +105,9 @@ void OrderBook::InsertLimitSellOrder(int id, short price, int quantity) {
 }
 
 void OrderBook::InsertIcebergBuyOrder(int id, short price, int quantity, int peak_size) {
-    cout << "COMMAND: BuyIcebergOrder (" << id << ", " << price << ", " << quantity << ", " << peak_size << ") " << endl;
+    #ifdef DEBUG
+        cerr << "COMMAND: BuyIcebergOrder (" << id << ", " << price << ", " << quantity << ", " << peak_size << ") " << endl;
+    #endif
     auto it = sell_orders.begin();
     while(it != sell_orders.end() && (*it).second->price <= price && quantity > 0) {
         auto& [k, order] = *it;
@@ -131,14 +138,18 @@ void OrderBook::InsertIcebergBuyOrder(int id, short price, int quantity, int pea
 
     if(quantity > 0) { 
         auto* berg = new IcebergOrder('B', time, id, price, quantity, peak_size);
-        cout << "Inserting Iceberg: " << *berg << endl;
+        #ifdef DEBUG
+            cerr << "Inserting Iceberg: " << *berg << endl;
+        #endif
         AddBuyOrder(berg);
     }
     time++;
 }
 
 void OrderBook::InsertIcebergSellOrder(int id, short price, int quantity, int peak_size) {
-    cout << "COMMAND: SellIcebergOrder (" << id << ", " << price << ", " << quantity << ", " << peak_size << ") " << endl;
+    #ifdef DEBUG
+        cerr << "COMMAND: SellIcebergOrder (" << id << ", " << price << ", " << quantity << ", " << peak_size << ") " << endl;
+    #endif
     auto it = buy_orders.begin();
     while(it != buy_orders.end() && (*it).second->price <= price && quantity > 0) {
         auto& [k, order] = *it;
@@ -169,7 +180,9 @@ void OrderBook::InsertIcebergSellOrder(int id, short price, int quantity, int pe
 
     if(quantity > 0) { 
         auto* berg = new IcebergOrder('S', time, id, price, quantity, peak_size);
-        cout << "Inserting Iceberg: " << *berg << endl;
+        #ifdef DEBUG
+            cerr << "Inserting Iceberg: " << *berg << endl;
+        #endif
         AddSellOrder(berg);
     }
     time++;

@@ -1,6 +1,8 @@
 #include "Order.h"
 #include "OrderBook.h"
 
+#include <iostream>
+
 Order::Order(char type, int time, int id, short price, int quantity) 
     : type(type), time(time), id(id), price(price), quantity(quantity) {}
 
@@ -38,21 +40,20 @@ Order* IcebergOrder::Clone() {
     return new IcebergOrder(*this);
 }
 
-#include <iostream>
 void IcebergOrder::OnOrderResolved(OrderBook& book) {
     // Fragment order -- insert again into order book
-    // cout << "Iceberg Resolved: " << *this << endl;
+    // cerr << "Iceberg Resolved: " << *this << endl;
     int new_iceberg_quantity = iceberg_quantity - original_quantity;
-    // cout << "New Quantity: " << new_iceberg_quantity << endl;
+    // cerr << "New Quantity: " << new_iceberg_quantity << endl;
     if(new_iceberg_quantity > 0) { // Regenerate in peak_size...
         IcebergOrder* iceberg = dynamic_cast<IcebergOrder*>(this->Clone());
         iceberg->iceberg_quantity = new_iceberg_quantity;
         iceberg->original_quantity = (new_iceberg_quantity > peak_size) ? peak_size : new_iceberg_quantity;
         iceberg->quantity = iceberg->original_quantity;
         iceberg->time = book.getCurrentTime(); // Change priority of new iceberg order
-        // cout << "New Iceberg: " << *iceberg << endl;
-        (this->type == 'S')
-          ? book.AddSellOrder(iceberg)
-          : book.AddBuyOrder(iceberg);
+        // cerr << "New Iceberg: " << *iceberg << endl;
+        (this->type == 'B')
+          ? book.AddBuyOrder(iceberg)
+          : book.AddSellOrder(iceberg);
     }
 }

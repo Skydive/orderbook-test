@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <sstream>
+// For thousands comma separation
 #include <locale>
+// For pretty table printing
 #include <iomanip>
 #include <vector>
 
