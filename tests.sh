@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 # For each test (.cin) file in ./tests
 # Run with .cin and expect .cout
-# If they do not match, then 
-echo "Compiling..."
-make clean release
-if [ $? -ne 0 ]; then
-    echo "Compilation failed!"
-    echo "Aborting..."
-    exit 1
-fi
 echo "Running tests..."
 for i in tests/*.cin; do
     # Guard to break if no matching files are found

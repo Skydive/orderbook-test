@@ -44,6 +44,8 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
         it = sell_orders.begin();
     }
 
+    // TODO: Transactions printed sorted by RANDOM UUID! --- non-deterministic order
+    // TODO: Sort by insertion time...
     for(auto& [k, v] : transaction_quantities) {
         auto& [uuid, order_id, order_price] = k;
         RegisterTransaction(id, order_id, order_price, v);

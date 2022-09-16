@@ -1,0 +1,9 @@
+B,2,90,20000
+S,3,85,10000
+B,4,90,10000
+B,5,89,10000
+B,6,84,20000
+# B,6,84 should remain untouched
+# B,2 still has priority over B,4
+# Transact (2 -> 3), (4 -> 3), then (5 -> 3)
+S,3,85,30000
