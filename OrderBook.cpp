@@ -9,6 +9,7 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
     // Look at PDF for how matching is done specifically
 
     // Group transactions
+    // TODO: Account for order of grouping
     map<tuple<u64, int, short>, int> transaction_quantities;
 
     auto it = sell_orders.begin();

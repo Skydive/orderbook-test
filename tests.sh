@@ -4,6 +4,11 @@
 # If they do not match, then 
 echo "Compiling..."
 make clean release
+if [ $? -ne 0 ]; then
+    echo "Compilation failed!"
+    echo "Aborting..."
+    exit 1
+fi
 echo "Running tests..."
 for i in tests/*.cin; do
     # Guard to break if no matching files are found
@@ -30,9 +35,9 @@ for i in tests/*.cin; do
     else
         echo "Failure!"
         echo "Status: $DIFF_RESULT"
-        echo "Aborting!"
+        echo "Aborting..."
         diff --color <(echo "$RESULT") <(echo "$EXPECTED_RESULT")
-        break
+        exit 1
     fi
 done
 echo "All tests completed successfully!"
