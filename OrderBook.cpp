@@ -8,14 +8,18 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
     // Maybe think about how to move away from the 'OnOrderResolved' methodology.
     // Look at PDF for how matching is done specifically
 
+    // Group transactions
+    map<tuple<u64, int, short>, int> transaction_quantities;
+
     auto it = sell_orders.begin();
     while(it != sell_orders.end() && (*it).second->price <= price && quantity > 0) {
         auto& [k, order] = *it;
         if(order->quantity > quantity) {
             // Buy order consumed entirely
-            RegisterTransaction(id, order->id, order->price, quantity);
-
-             // Copy Iceberg if it's an Iceberg
+            // RegisterTransaction(id, order->id, order->price, quantity);
+            transaction_quantities[{order->uuid, order->id, order->price}] += quantity;
+            
+            // Copy Iceberg if it's an Iceberg
             Order* new_order = order->Clone();
             // TODO: order.time or time(??)
             // TODO: Do we alter the priority or not? (ASK!?)
@@ -28,7 +32,8 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
             break;
             
         } else { // order.quantity <= quantity
-            RegisterTransaction(id, order->id, order->price, order->quantity);
+            // RegisterTransaction(id, order->id, order->price, order->quantity);
+            transaction_quantities[{order->uuid, order->id, order->price}] += order->quantity;
 
             quantity -= order->quantity;
             order->OnOrderResolved(*this);
@@ -37,14 +42,22 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
         }
         it = sell_orders.begin();
     }
+
+    for(auto& [k, v] : transaction_quantities) {
+        auto& [uuid, order_id, order_price] = k;
+        RegisterTransaction(id, order_id, order_price, v);
+    }
 }
 
 void OrderBook::MatchSellOrder(int id, short price, int& quantity) {
+    map<tuple<u64, int, short>, int> transaction_quantities;
+
     auto it = buy_orders.begin();
     while(it != buy_orders.end() && (*it).second->price >= price && quantity > 0) {
         auto& [k, order] = *it;
         if(order->quantity > quantity) {
-            RegisterTransaction(order->id, id, order->price, quantity);
+            // RegisterTransaction(order->id, id, order->price, quantity);
+            transaction_quantities[{order->uuid, order->id, order->price}] += quantity;
 
             Order* new_order = order->Clone();
             // TODO: order.time or time(??)
@@ -57,7 +70,8 @@ void OrderBook::MatchSellOrder(int id, short price, int& quantity) {
             buy_orders.erase(it);
             break;
         } else {
-            RegisterTransaction(order->id, id, order->price, order->quantity);
+            // RegisterTransaction(order->id, id, order->price, order->quantity);
+            transaction_quantities[{order->uuid, order->id, order->price}] += order->quantity;
 
             quantity -= order->quantity;
             order->OnOrderResolved(*this);
@@ -66,6 +80,11 @@ void OrderBook::MatchSellOrder(int id, short price, int& quantity) {
         }
         // Print();
         it = buy_orders.begin();
+    }
+
+    for(auto& [k, v] : transaction_quantities) {
+        auto& [uuid, order_id, order_price] = k;
+        RegisterTransaction(order_id, id, order_price, v);
     }
 }
 

@@ -20,7 +20,7 @@ $(OBJ_DIR)/%.o: %.cpp
 	$(Q)$(CC) -c $< -o $@ $(CFLAGS)
 
 $(FILE_OUT): $(FILES_OBJ)
-	$(Q)echo "	LD $<"
+	$(Q)echo " LD $@"
 	$(Q)mkdir -p $(OUT_DIR)
 	$(Q)$(CC) $^ -o $@ $(LFLAGS)
 

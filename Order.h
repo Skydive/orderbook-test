@@ -5,9 +5,15 @@ class OrderBook;
 
 using namespace std;
 
+#include <cstdint>
+typedef uint64_t u64;
+
 // TODO: Code getters/setters for Order object parameters
 class Order {
+private:
+    static u64 GenerateUniqueU64();
 public:
+    u64 uuid;
     char type;
     int time;
     int id;

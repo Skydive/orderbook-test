@@ -2,9 +2,12 @@
 #include "OrderBook.h"
 
 #include <iostream>
+#include <random>
 
 Order::Order(char type, int time, int id, short price, int quantity) 
-    : type(type), time(time), id(id), price(price), quantity(quantity) {}
+    : type(type), time(time), id(id), price(price), quantity(quantity) {
+    uuid = Order::GenerateUniqueU64();
+}
 
 Order::~Order() {}
 
@@ -27,6 +30,12 @@ ostream& operator<<(ostream& os, const IcebergOrder& order) {
     return os;
 }
 
+u64 Order::GenerateUniqueU64() {
+    static random_device rd;
+    static mt19937_64 gen(rd());
+    static uniform_int_distribution<u64> dis;
+    return dis(gen);
+}
 
 Order* Order::Clone() {
     return new Order(*this);

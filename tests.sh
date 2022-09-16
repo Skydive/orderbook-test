@@ -29,7 +29,8 @@ for i in tests/*.cin; do
         echo "Success!"
     else
         echo "Failure!"
-        echo "Status: $DIFF_RESULT Aborting!"
+        echo "Status: $DIFF_RESULT"
+        echo "Aborting!"
         diff --color <(echo "$RESULT") <(echo "$EXPECTED_RESULT")
         break
     fi
