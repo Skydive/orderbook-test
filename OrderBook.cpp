@@ -2,6 +2,11 @@
 
 #include <climits>
 #include <iostream>
+#include <vector>
+// Sort
+#include <algorithm>
+// TODO: Implement hash for tuple in util.h
+// #include <unordered_map>
 
 void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
     // TODO: Register a special transaction when we match against an iceberg
@@ -10,8 +15,9 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
 
     // Group transactions
     // TODO: Account for order of grouping
-    map<tuple<u64, int, short>, int> transaction_quantities;
+    map<tuple<u64, int, short>, int> transaction_quantities, last_time_accessed;
 
+    int i=0;
     auto it = sell_orders.begin();
     while(it != sell_orders.end() && (*it).second->price <= price && quantity > 0) {
         auto& [k, order] = *it;
@@ -19,7 +25,7 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
             // Buy order consumed entirely
             // RegisterTransaction(id, order->id, order->price, quantity);
             transaction_quantities[{order->uuid, order->id, order->price}] += quantity;
-            
+            last_time_accessed[{order->uuid, order->id, order->price}] = i;
             // Copy Iceberg if it's an Iceberg
             Order* new_order = order->Clone();
             // TODO: order.time or time(??)
@@ -35,6 +41,7 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
         } else { // order.quantity <= quantity
             // RegisterTransaction(id, order->id, order->price, order->quantity);
             transaction_quantities[{order->uuid, order->id, order->price}] += order->quantity;
+            last_time_accessed[{order->uuid, order->id, order->price}] = i;
 
             quantity -= order->quantity;
             order->OnOrderResolved(*this);
@@ -42,25 +49,33 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
             sell_orders.erase(it);
         }
         it = sell_orders.begin();
+        i++;
     }
 
-    // TODO: Transactions printed sorted by RANDOM UUID! --- non-deterministic order
-    // TODO: Sort by insertion time...
-    for(auto& [k, v] : transaction_quantities) {
+    vector<tuple<int, u64, int, short, int>> ordered_transactions;
+    for(auto& [k, v] : last_time_accessed) {
         auto& [uuid, order_id, order_price] = k;
-        RegisterTransaction(id, order_id, order_price, v);
+        ordered_transactions.push_back({
+            v, uuid, order_id, order_price, transaction_quantities[k]
+        });
+    }
+    sort(ordered_transactions.begin(), ordered_transactions.end());
+    for(auto& x : ordered_transactions) {
+        auto& [time, uuid, order_id, order_price, q] = x;
+        RegisterTransaction(id, order_id, order_price, q);
     }
 }
 
 void OrderBook::MatchSellOrder(int id, short price, int& quantity) {
-    map<tuple<u64, int, short>, int> transaction_quantities;
+    map<tuple<u64, int, short>, int> transaction_quantities, last_time_accessed;
 
+    int i=0;
     auto it = buy_orders.begin();
     while(it != buy_orders.end() && (*it).second->price >= price && quantity > 0) {
         auto& [k, order] = *it;
         if(order->quantity > quantity) {
-            // RegisterTransaction(order->id, id, order->price, quantity);
             transaction_quantities[{order->uuid, order->id, order->price}] += quantity;
+            last_time_accessed[{order->uuid, order->id, order->price}] = i;
 
             Order* new_order = order->Clone();
             // TODO: order.time or time(??)
@@ -73,21 +88,29 @@ void OrderBook::MatchSellOrder(int id, short price, int& quantity) {
             buy_orders.erase(it);
             break;
         } else {
-            // RegisterTransaction(order->id, id, order->price, order->quantity);
             transaction_quantities[{order->uuid, order->id, order->price}] += order->quantity;
+            last_time_accessed[{order->uuid, order->id, order->price}] = i;
 
             quantity -= order->quantity;
             order->OnOrderResolved(*this);
             delete order;
             buy_orders.erase(it);
         }
-        // Print();
         it = buy_orders.begin();
+        i++;
     }
 
-    for(auto& [k, v] : transaction_quantities) {
+    vector<tuple<int, u64, int, short, int>> ordered_transactions;
+    for(auto& [k, v] : last_time_accessed) {
         auto& [uuid, order_id, order_price] = k;
-        RegisterTransaction(order_id, id, order_price, v);
+        ordered_transactions.push_back({
+            v, uuid, order_id, order_price, transaction_quantities[k]
+        });
+    }
+    sort(ordered_transactions.begin(), ordered_transactions.end());
+    for(auto& x : ordered_transactions) {
+        auto& [time, uuid, order_id, order_price, q] = x;
+        RegisterTransaction(order_id, id, order_price, q);
     }
 }
 

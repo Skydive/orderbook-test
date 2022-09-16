@@ -6,6 +6,7 @@
 
 Order::Order(char type, int time, int id, short price, int quantity) 
     : type(type), time(time), id(id), price(price), quantity(quantity) {
+    // Generate UUID for grouping together iceberg orders when printing them
     uuid = Order::GenerateUniqueU64();
 }
 
