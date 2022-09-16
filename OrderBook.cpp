@@ -3,31 +3,20 @@
 #include <climits>
 #include <iostream>
 
-void OrderBook::InsertLimitBuyOrder(int id, short price, int quantity) {
-    // Check if a transaction can occur!
-    // Find lowest someone is willing to sell below my bid price
-    #ifdef DEBUG
-        cerr << "COMMAND: BuyLimitOrder (" << id << ", " << price << ", " << quantity << ") " << endl;
-    #endif
-    auto it = sell_orders.begin();
-    // Print();
-
-    // TODO: Split matching parts into seperate functions
-    // Register a special transaction when we match against an iceberg
+void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
+    // TODO: Register a special transaction when we match against an iceberg
     // Maybe think about how to move away from the 'OnOrderResolved' methodology.
     // Look at PDF for how matching is done specifically
+
+    auto it = sell_orders.begin();
     while(it != sell_orders.end() && (*it).second->price <= price && quantity > 0) {
-        // cout << "Current Iterator: " << endl;
-        // cout << (*it).second << endl;
-
-        // cout << "Quantity:" << quantity << endl;
-
         auto& [k, order] = *it;
         if(order->quantity > quantity) {
             // Buy order consumed entirely
             RegisterTransaction(id, order->id, order->price, quantity);
 
-            Order* new_order = order->Clone(); // Copy Iceberg if it's an Iceberg
+             // Copy Iceberg if it's an Iceberg
+            Order* new_order = order->Clone();
             // TODO: order.time or time(??)
             // TODO: Do we alter the priority or not? (ASK!?)
             new_order->time = order->time; 
@@ -46,10 +35,47 @@ void OrderBook::InsertLimitBuyOrder(int id, short price, int quantity) {
             delete order;
             sell_orders.erase(it);
         }
-        // Print();
         it = sell_orders.begin();
-        // it = sell_orders.lower_bound({price+1, INT_MIN});
     }
+}
+
+void OrderBook::MatchSellOrder(int id, short price, int& quantity) {
+    auto it = buy_orders.begin();
+    while(it != buy_orders.end() && (*it).second->price >= price && quantity > 0) {
+        auto& [k, order] = *it;
+        if(order->quantity > quantity) {
+            RegisterTransaction(order->id, id, order->price, quantity);
+
+            Order* new_order = order->Clone();
+            // TODO: order.time or time(??)
+            // TODO: Do we alter the priority or not? (ASK!?)
+            new_order->time = order->time;
+            new_order->quantity -= quantity;
+            AddBuyOrder(new_order);
+            quantity = 0;
+            delete order;
+            buy_orders.erase(it);
+            break;
+        } else {
+            RegisterTransaction(order->id, id, order->price, order->quantity);
+
+            quantity -= order->quantity;
+            order->OnOrderResolved(*this);
+            delete order;
+            buy_orders.erase(it);
+        }
+        // Print();
+        it = buy_orders.begin();
+    }
+}
+
+void OrderBook::InsertLimitBuyOrder(int id, short price, int quantity) {
+    // Check if a transaction can occur!
+    // Find lowest someone is willing to sell below my bid price
+    #ifdef DEBUG
+        cerr << "COMMAND: BuyLimitOrder (" << id << ", " << price << ", " << quantity << ") " << endl;
+    #endif
+    MatchBuyOrder(id, price, quantity);
 
     if(quantity > 0) { 
         AddBuyOrder(new Order('B', time, id, price, quantity));
@@ -62,41 +88,7 @@ void OrderBook::InsertLimitSellOrder(int id, short price, int quantity) {
     #ifdef DEBUG
         cerr << "COMMAND: SellLimitOrder (" << id << ", " << price << ", " << quantity << ") " << endl;;
     #endif
-    auto it = buy_orders.begin();
-    // Print();
-    while(it != buy_orders.end() && (*it).second->price >= price && quantity > 0) {
-        // cout << "Current Iterator: " << endl;
-        // (*it).second.Print();
-        // cout << endl;
-
-        // cout << "Quantity:" << quantity << endl;
-
-        auto& [k, order] = *it;
-        if(order->quantity > quantity) {
-            // Sell order consumed entirely
-            // Remove quantity from order in OrderBook
-            RegisterTransaction(order->id, id, order->price, quantity);
-            // TODO: order.time or time(??)
-
-            Order* new_order = order->Clone();
-            new_order->time = time;
-            new_order->quantity -= quantity;
-            AddBuyOrder(new_order);
-            quantity = 0;
-            delete order;
-            buy_orders.erase(it);
-            break;
-        } else { // order.quantity <= quantity
-            RegisterTransaction(order->id, id, order->price, order->quantity);
-
-            quantity -= order->quantity;
-            order->OnOrderResolved(*this);
-            delete order;
-            buy_orders.erase(it);
-        }
-        // Print();
-        it = buy_orders.begin();
-    }
+    MatchSellOrder(id, price, quantity);
 
     if(quantity > 0) { 
         AddSellOrder(new Order('S', time, id, price, quantity));
@@ -108,33 +100,7 @@ void OrderBook::InsertIcebergBuyOrder(int id, short price, int quantity, int pea
     #ifdef DEBUG
         cerr << "COMMAND: BuyIcebergOrder (" << id << ", " << price << ", " << quantity << ", " << peak_size << ") " << endl;
     #endif
-    auto it = sell_orders.begin();
-    while(it != sell_orders.end() && (*it).second->price <= price && quantity > 0) {
-        auto& [k, order] = *it;
-        if(order->quantity > quantity) {
-            // Iceberg order consumed entirely
-            RegisterTransaction(id, order->id, order->price, quantity);
-
-            Order* new_order = order->Clone(); // Copy Iceberg if it's an Iceberg
-            new_order->time = time; // Alter priority
-            new_order->quantity -= quantity;
-            AddSellOrder(new_order);
-            quantity = 0;
-            delete order;
-            sell_orders.erase(it);
-            break;
-            
-        } else { // order.quantity <= quantity
-            // TODO: Is this valid - how do we record an Iceberg...
-            RegisterTransaction(id, order->id, order->price, order->quantity);
-
-            quantity -= order->quantity;
-            order->OnOrderResolved(*this);
-            delete order;
-            sell_orders.erase(it);
-        }
-        it = sell_orders.begin();
-    }
+    MatchBuyOrder(id, price, quantity);
 
     if(quantity > 0) { 
         auto* berg = new IcebergOrder('B', time, id, price, quantity, peak_size);
@@ -150,33 +116,7 @@ void OrderBook::InsertIcebergSellOrder(int id, short price, int quantity, int pe
     #ifdef DEBUG
         cerr << "COMMAND: SellIcebergOrder (" << id << ", " << price << ", " << quantity << ", " << peak_size << ") " << endl;
     #endif
-    auto it = buy_orders.begin();
-    while(it != buy_orders.end() && (*it).second->price <= price && quantity > 0) {
-        auto& [k, order] = *it;
-        if(order->quantity > quantity) {
-            // Iceberg order consumed entirely
-            RegisterTransaction(order->id, id, order->price, quantity);
-
-            Order* new_order = order->Clone(); // Copy Iceberg if it's an Iceberg
-            new_order->time = time; // Alter priority
-            new_order->quantity -= quantity;
-            AddBuyOrder(new_order);
-            quantity = 0;
-            delete order;
-            buy_orders.erase(it);
-            break;
-            
-        } else { // order.quantity <= quantity
-            // TODO: Is this valid - how do we record an Iceberg...
-            RegisterTransaction(order->id, id, order->price, order->quantity);
-
-            quantity -= order->quantity;
-            order->OnOrderResolved(*this);
-            delete order;
-            buy_orders.erase(it);
-        }
-        it = buy_orders.begin();
-    }
+    MatchSellOrder(id, price, quantity);
 
     if(quantity > 0) { 
         auto* berg = new IcebergOrder('S', time, id, price, quantity, peak_size);

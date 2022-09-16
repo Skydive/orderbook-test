@@ -17,6 +17,8 @@ private:
     OrderGroup sell_orders;
     
     // vector<TradeExecuted> transactions;
+    void MatchBuyOrder(int id, short price, int& quantity);
+    void MatchSellOrder(int id, short price, int& quantity);
 public:
     OrderBook() : time(0) {};
     void InsertLimitBuyOrder(int id, short price, int quantity);
