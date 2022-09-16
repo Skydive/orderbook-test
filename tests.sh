@@ -27,13 +27,22 @@ for i in tests/*.cin; do
     fi
     # Run on each .cin and ignore CERR 
     RESULT=$(./bin/IcebergExecutable < $CIN_FILE 2>/dev/null)
+    RESULT_STATUS=$?
+    if [ $RESULT_STATUS -ne 0 ]; then
+        echo "Failure! Execution Error!"
+        echo "Status: $DIFF_RESULT"
+        echo "Aborting..."
+        diff --color <(echo "$RESULT") <(echo "$EXPECTED_RESULT")
+        exit 1
+    fi
+
     EXPECTED_RESULT=$(cat $COUT_FILE)
     DIFF_OUTPUT=$(diff --color <(echo "$RESULT") <(echo "$EXPECTED_RESULT"))
     DIFF_RESULT=$?
     if [ $DIFF_RESULT -eq 0 ]; then
         echo "Success!"
     else
-        echo "Failure!"
+        echo "Failure! Incorrect Output."
         echo "Status: $DIFF_RESULT"
         echo "Aborting..."
         diff --color <(echo "$RESULT") <(echo "$EXPECTED_RESULT")
