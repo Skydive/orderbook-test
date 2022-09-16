@@ -3,10 +3,11 @@
 #include <climits>
 #include <iostream>
 #include <vector>
-// Sort
-#include <algorithm>
-// TODO: Implement hash for tuple in util.h
-// #include <unordered_map>
+#include <algorithm> // std::sort
+
+#include <unordered_map>
+
+#include "util.h"
 
 void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
     // TODO: Register a special transaction when we match against an iceberg
@@ -15,7 +16,7 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
 
     // Group transactions
     // TODO: Account for order of grouping
-    map<tuple<u64, int, short>, int> transaction_quantities, last_time_accessed;
+    unordered_map<tuple<u64, int, short>, int, util::key_hash, util::key_equal> transaction_quantities, last_time_accessed;
 
     int i=0;
     auto it = sell_orders.begin();
