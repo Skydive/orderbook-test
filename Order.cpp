@@ -12,22 +12,8 @@ Order::Order(char type, int time, int id, short price, int quantity)
 
 Order::~Order() {}
 
-IcebergOrder::IcebergOrder(char type, int time, int id, short price, int quantity, int peak_size)
-    : Order(type, time, id, price, quantity),
-      peak_size(peak_size), original_quantity(peak_size), iceberg_quantity(quantity) {
-    this->original_quantity = min(quantity, peak_size);
-    this->quantity = original_quantity;
-};
-
-IcebergOrder::~IcebergOrder() {}
-
 ostream& operator<<(ostream& os, const Order& order) {
     os << order.type << " " << order.time << " " << order.id << " " << order.price << " " << order.quantity;
-    return os;
-}
-ostream& operator<<(ostream& os, const IcebergOrder& order) {
-    os << order.type << " " << order.time << " " << order.id << " " << order.price << " " << order.quantity << " ("
-       << order.original_quantity << " " << order.iceberg_quantity << ")";
     return os;
 }
 
@@ -44,6 +30,21 @@ Order* Order::Clone() {
 
 void Order::OnOrderResolved(OrderBook& book) {
     (void)book; // for compiler...
+}
+
+IcebergOrder::IcebergOrder(char type, int time, int id, short price, int quantity, int peak_size)
+    : Order(type, time, id, price, quantity),
+      peak_size(peak_size), original_quantity(peak_size), iceberg_quantity(quantity) {
+    this->original_quantity = min(quantity, peak_size);
+    this->quantity = original_quantity;
+};
+
+IcebergOrder::~IcebergOrder() {}
+
+ostream& operator<<(ostream& os, const IcebergOrder& order) {
+    os << order.type << " " << order.time << " " << order.id << " " << order.price << " " << order.quantity << " ("
+       << order.original_quantity << " " << order.iceberg_quantity << ")";
+    return os;
 }
 
 Order* IcebergOrder::Clone() {

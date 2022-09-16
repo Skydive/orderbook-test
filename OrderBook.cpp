@@ -10,12 +10,7 @@
 #include "util.h"
 
 void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
-    // TODO: Register a special transaction when we match against an iceberg
-    // Maybe think about how to move away from the 'OnOrderResolved' methodology.
-    // Look at PDF for how matching is done specifically
-
-    // Group transactions
-    // TODO: Account for order of grouping
+    // For grouping transactions
     unordered_map<tuple<u64, int, short>, int, util::key_hash, util::key_equal> transaction_quantities, last_time_accessed;
 
     int i=0;
@@ -24,7 +19,6 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
         auto& [k, order] = *it;
         if(order->quantity > quantity) {
             // Buy order consumed entirely
-            // RegisterTransaction(id, order->id, order->price, quantity);
             transaction_quantities[{order->uuid, order->id, order->price}] += quantity;
             last_time_accessed[{order->uuid, order->id, order->price}] = i;
             // Copy Iceberg if it's an Iceberg
@@ -40,7 +34,6 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
             break;
             
         } else { // order.quantity <= quantity
-            // RegisterTransaction(id, order->id, order->price, order->quantity);
             transaction_quantities[{order->uuid, order->id, order->price}] += order->quantity;
             last_time_accessed[{order->uuid, order->id, order->price}] = i;
 
@@ -68,7 +61,7 @@ void OrderBook::MatchBuyOrder(int id, short price, int& quantity) {
 }
 
 void OrderBook::MatchSellOrder(int id, short price, int& quantity) {
-    map<tuple<u64, int, short>, int> transaction_quantities, last_time_accessed;
+    unordered_map<tuple<u64, int, short>, int, util::key_hash, util::key_equal> transaction_quantities, last_time_accessed;
 
     int i=0;
     auto it = buy_orders.begin();
