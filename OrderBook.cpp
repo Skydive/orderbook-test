@@ -119,7 +119,6 @@ void OrderBook::InsertLimitBuyOrder(int id, short price, int quantity) {
     if(quantity > 0) { 
         AddBuyOrder(new Order('B', time, id, price, quantity));
     }
-    time++;
 }
 
 void OrderBook::InsertLimitSellOrder(int id, short price, int quantity) {
@@ -132,7 +131,6 @@ void OrderBook::InsertLimitSellOrder(int id, short price, int quantity) {
     if(quantity > 0) { 
         AddSellOrder(new Order('S', time, id, price, quantity));
     }
-    time++;
 }
 
 void OrderBook::InsertIcebergBuyOrder(int id, short price, int quantity, int peak_size) {
@@ -148,7 +146,6 @@ void OrderBook::InsertIcebergBuyOrder(int id, short price, int quantity, int pea
         #endif
         AddBuyOrder(berg);
     }
-    time++;
 }
 
 void OrderBook::InsertIcebergSellOrder(int id, short price, int quantity, int peak_size) {
@@ -164,7 +161,6 @@ void OrderBook::InsertIcebergSellOrder(int id, short price, int quantity, int pe
         #endif
         AddSellOrder(berg);
     }
-    time++;
 }
 
 void OrderBook::RegisterTransaction(int buy_id, int sell_id, short price, int quantity) {
@@ -174,10 +170,12 @@ void OrderBook::RegisterTransaction(int buy_id, int sell_id, short price, int qu
 
 void OrderBook::AddBuyOrder(Order* order) {
     buy_orders.insert({{-order->price, order->time}, (order)});
+    time++;
 }
 
 void OrderBook::AddSellOrder(Order* order) {
     sell_orders.insert({{order->price, order->time}, (order)});
+    time++;
 }
 
 OrderGroup& OrderBook::getBuyOrders() {
