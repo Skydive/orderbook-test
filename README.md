@@ -115,6 +115,7 @@ Mobile Phone (Android/Termux): (Clang v14.0.6 aarch64)
     InstalledDir: /data/data/com.teremux/files/usr/bin
 
 Windows Subsystem for Linux: (Ubuntu g++)
+
     >g++ -v
     Using built-in specs.
     COLLECT_GCC=g++
